@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Embryos</h1>
+<p class="muted small">Last updated: {{ last_updated }}</p>
+<div class="grid">
+  {% for e in summaries %}
+  <a class="card" href="{{ url_for('embryo_detail', embryo_id=e.embryo_id) }}">
+    <div class="row space-between">
+      <h2>Embryo {{ e.embryo_id }}</h2>
+       {% set is_carrier = (
+         (e.monogenic['BRCA1']|lower == 'carrier') or
+         (e.monogenic['CFTR']|lower == 'carrier')
+       ) %}
+       {% if is_carrier %}
+         <span class="chip chip-bad">Carrier</span>
+       {% endif %}
+
+      <div class="score {{ 'good' if e.overall_score >= 70 else 'ok' if e.overall_score >= 40 else 'bad' }}">
+        {{ e.overall_score }}/100
+      </div>
+    </div>
+    <div class="risks">
+      {% for name, pct in e.polygenic.items() %}
+      <div class="risk">
+        <span class="risk-name">{{ name }}</span>
+        <span class="risk-pct">{{ pct }}%</span>
+      </div>
+      {% endfor %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

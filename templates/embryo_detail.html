@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+{% block content %}
+<a href="{{ url_for('dashboard') }}" class="back">&larr; Back</a>
+<h1>Embryo {{ detail.embryo_id }}</h1>
+
+<!-- Overall score -->
+<section class="panel">
+  <h3>Overall Score</h3>
+  <div class="score {{ 'good' if detail.overall_score >= 70 else 'ok' if detail.overall_score >= 40 else 'bad' }}">
+    {{ detail.overall_score }}/100
+  </div>
+</section>
+
+<!-- Polygenic -->
+<section class="panel">
+  <h3>Polygenic Risk</h3>
+  <table class="table">
+    <thead><tr><th>Condition</th><th>Estimated Risk</th></tr></thead>
+    <tbody>
+      {% for name, pct in detail.polygenic.items() %}
+      <tr><td>{{ name }}</td><td>{{ pct }}%</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="height:220px;margin-top:12px;">
+    <canvas id="riskChart"></canvas>
+  </div>
+  <script>
+    const labels = {{ detail.polygenic.keys()|list|tojson }};
+    const values = {{ detail.polygenic.values()|list|tojson }};
+    const ctx = document.getElementById('riskChart');
+    if (ctx && window.Chart) {
+      new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Estimated Risk %', data: values }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  </script>
+</section>
+
+<!-- Monogenic -->
+<section class="panel">
+  <h3>Monogenic Findings</h3>
+  <table class="table">
+    <thead><tr><th>Gene</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for gene, status in detail.monogenic.items() %}
+      <tr>
+        <td>{{ gene }}</td>
+        <td>
+          <span class="badge {{ 'bad' if status|lower == 'carrier' else 'good' }}">{{ status|title }}</span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- Actions -->
+<section class="panel actions">
+  <a class="btn" href="{{ url_for('report_pdf', embryo_id=detail.embryo_id) }}">Download PDF Report</a>
+</section>
+
+<!-- Notes + Scheduling -->
+<section class="grid-2">
+  <div class="panel">
+    <h3>Counselor Notes</h3>
+    <form method="post" action="{{ url_for('add_note', embryo_id=detail.embryo_id) }}" class="stack">
+      <textarea name="content" placeholder="Add a note..." required></textarea>
+      <button class="btn" type="submit">Add Note</button>
+    </form>
+    <ul class="notes">
+      {% for n in notes %}
+        <li><span class="muted">{{ n['created_at'] }}</span><br>{{ n['content']|e }}</li>
+      {% else %}
+        <li class="muted">No notes yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h3>Schedule Counseling</h3>
+    <form method="post" action="{{ url_for('schedule_appt', embryo_id=detail.embryo_id) }}" class="stack">
+      <input type="text" name="name" placeholder="Patient name" required>
+      <input type="email" name="email" placeholder="Patient email" required>
+      <input type="datetime-local" name="appt_time" required>
+      <textarea name="notes" placeholder="Notes (optional)"></textarea>
+      <button class="btn" type="submit">Schedule</button>
+    </form>
+    <h4>Upcoming Appointments</h4>
+    <ul class="notes">
+      {% for a in appts %}
+        <li>
+          <b>{{ a['appt_time'] }}</b> — {{ a['name'] }} ({{ a['email'] }})
+          {% if a['notes'] %}<br><span class="muted">{{ a['notes'] }}</span>{% endif %}
+        </li>
+      {% else %}
+        <li class="muted">No appointments yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}
+

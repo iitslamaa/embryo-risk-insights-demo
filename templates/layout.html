@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Embryo Risk Insights (Demo)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <nav class="nav">
+      <div class="container">
+        <a href="{{ url_for('dashboard') }}" class="brand">
+          <span class="leaf" aria-hidden="true">🌱</span> Embryo Risk Insights
+        </a>
+      </div>
+    </nav>
+    <main class="container">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="footer container">
+      <p>Demo project. No real patient data. Not for clinical use.</p>
+    </footer>
+  </body>
+</html>

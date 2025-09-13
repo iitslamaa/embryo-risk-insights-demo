@@ -1,0 +1,6 @@
+id,snp1,snp2,snp3,snp4,snp5,snp6,snp7,snp8,snp9,snp10,BRCA1,CFTR
+A,0,1,2,1,0,2,1,0,1,2,negative,carrier
+B,2,0,1,0,1,2,0,1,2,0,carrier,negative
+C,1,1,1,2,0,0,2,2,1,0,negative,negative
+D,0,2,0,1,2,0,1,2,0,1,carrier,carrier
+E,2,2,1,0,0,1,1,0,2,2,negative,negative

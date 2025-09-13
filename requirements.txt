@@ -1,0 +1,6 @@
+Flask
+python-dotenv
+reportlab
+pandas
+numpy
+scikit-learn

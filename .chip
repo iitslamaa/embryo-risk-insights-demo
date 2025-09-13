@@ -1,0 +1,12 @@
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  font-weight:600;
+  font-size:.78em;
+  border:1px solid #e5e7eb;
+  background:#f9fafb;
+  vertical-align:middle;
+  margin-left:8px;
+}
+.chip-bad { color:#7f1d1d; background:#fef2f2; border-color:#fecaca; }
+
