@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="card" style="max-width:720px;margin:auto;">
+  <h2 style="margin:0 0 12px 0;">Settings</h2>
+  <p class="small" style="margin:0 0 16px 0;">Tweak model config and persist state.</p>
+
+  <form id="cfgForm" class="grid-2" onsubmit="return false;">
+    <div class="panel" style="margin:0;">
+      <label for="seed"><strong>Seed</strong></label>
+      <input id="seed" name="seed" type="number" step="1" class="input" placeholder="e.g. 123">
+    </div>
+    <div class="panel" style="margin:0;">
+      <label for="scale"><strong>Scale</strong></label>
+      <input id="scale" name="scale" type="number" step="0.01" class="input" placeholder="e.g. 1.5">
+    </div>
+
+    <div class="panel" style="grid-column:1/-1;margin:0;display:flex;gap:8px;align-items:center;">
+      <button id="loadBtn" class="btn" type="button">Load current config</button>
+      <button id="saveCfgBtn" class="btn" type="button">Save config</button>
+      <button id="saveModelBtn" class="btn" type="button">Save model state</button>
+      <span id="msg" class="small" style="margin-left:8px;color:var(--muted);"></span>
+    </div>
+  </form>
+</div>
+
+<script>
+const TOKEN = "{{ api_token }}"; // demo-only; fine for local dev
+const H = { "Authorization": `Bearer ${TOKEN}`, "Content-Type": "application/json" };
+
+async function loadConfig() {
+  const r = await fetch("/api/config", { headers: { "Authorization": `Bearer ${TOKEN}` }});
+  const j = await r.json();
+  if (j.seed !== undefined) document.getElementById("seed").value = j.seed;
+  if (j.scale !== undefined) document.getElementById("scale").value = j.scale;
+  setMsg("Config loaded.");
+}
+
+async function saveConfig() {
+  const seed = document.getElementById("seed").value;
+  const scale = document.getElementById("scale").value;
+  const body = {};
+  if (seed !== "") body.seed = parseInt(seed, 10);
+  if (scale !== "") body.scale = parseFloat(scale);
+  const r = await fetch("/api/config", { method: "POST", headers: H, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (r.ok && j.ok) {
+    setMsg(`Config saved. seed=${j.config.seed}, scale=${j.config.scale}`);
+  } else {
+    setMsg(`Error: ${j.error || r.status}`, true);
+  }
+}
+
+async function saveModel() {
+  const r = await fetch("/api/model/save", { method: "POST", headers: { "Authorization": `Bearer ${TOKEN}` }});
+  const j = await r.json();
+  if (r.ok && j.ok) setMsg(`Model saved to ${j.path}`);
+  else setMsg(`Error: ${j.error || r.status}`, true);
+}
+
+function setMsg(s, bad=false){
+  const el = document.getElementById("msg");
+  el.textContent = s;
+  el.style.color = bad ? "var(--bad)" : "var(--muted)";
+}
+
+document.getElementById("loadBtn").onclick = loadConfig;
+document.getElementById("saveCfgBtn").onclick = saveConfig;
+document.getElementById("saveModelBtn").onclick = saveModel;
+
+// auto-load on first visit
+loadConfig();
+</script>
+{% endblock %}

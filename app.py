@@ -113,9 +113,12 @@ def require_token(f):
     return _wrap
 
 def _check_token(req):
-    """Legacy check used by existing endpoints (kept for compatibility)."""
-    token = req.headers.get("X-API-TOKEN") or req.args.get("token")
+    # Accept Authorization: Bearer <token>, X-API-TOKEN header, or ?token= query
+    auth = req.headers.get("Authorization", "")
+    bearer = auth.split(" ", 1)[1] if auth.startswith("Bearer ") else ""
+    token = bearer or req.headers.get("X-API-TOKEN") or req.args.get("token")
     return token == API_TOKEN
+
 
 # ----------------------------
 # Pages
@@ -278,6 +281,17 @@ def load_model():
 @app.get("/_debug/routes")
 def _routes():
     return jsonify(sorted([str(r) for r in app.url_map.iter_rules()]))
+
+@app.get("/settings")
+def settings():
+    # passes the API token so the page JS can call the protected endpoints
+    return render_template("settings.html", api_token=API_TOKEN)
+
+@app.get("/compare")
+def compare():
+    # pass the token so the React app can call protected APIs
+    return render_template("compare.html", api_token=API_TOKEN)
+
 
 # ----------------------------
 # Main

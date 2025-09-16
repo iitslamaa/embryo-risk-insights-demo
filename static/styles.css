@@ -107,3 +107,36 @@ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-appl
 a.back{color:var(--accent);}
 .brand{color:var(--fg);text-decoration:none;}
 
+.input{width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.panel{padding:12px;border-radius:12px;background:var(--card);border:1px solid #efe7e5;}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:999px;padding:8px 14px;
+     color:#fff;background:var(--accent);cursor:pointer;font-weight:600;}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
+.small{font-size:.85em;color:var(--muted);}
+
+/* nav layout */
+.nav { background:#fff; border-bottom:1px solid #efe7e5; }
+.nav-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; }
+.brand { display:inline-flex; gap:8px; align-items:center; text-decoration:none; font-weight:700; color:var(--fg); }
+.brand .leaf{ display:inline-block; transform-origin:10% 90%; }
+.brand:hover .leaf{ animation:leaf-wiggle 600ms ease-in-out both; }
+
+.nav-links { display:flex; gap:16px; }
+.nav-links a { color:var(--fg); text-decoration:none; font-weight:600; }
+.nav-links a:hover{ text-decoration:underline; }
+
+/* table (if not already present) */
+.table{ width:100%; border-collapse:collapse; }
+.table th,.table td{ padding:8px; border-bottom:1px solid #efe7e5; text-align:left; }
+
+/* buttons/inputs (if needed) */
+.input{ width:100%; padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; background:#fff; }
+.btn{ display:inline-flex; align-items:center; gap:8px; border:none; border-radius:999px; padding:8px 14px;
+      color:#fff; background:var(--accent); cursor:pointer; font-weight:600; }
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* wiggle you already had */
+@keyframes leaf-wiggle{
+  0%{transform:rotate(0)}30%{transform:rotate(-18deg)}60%{transform:rotate(12deg)}80%{transform:rotate(-8deg)}100%{transform:rotate(0)}
+}

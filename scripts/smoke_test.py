@@ -1,8 +1,8 @@
-import os, requests
+import os, requests, json
 
-BASE = os.getenv("BASE_URL", "http://127.0.0.1:8000")
-TOKEN = os.getenv("TOKEN", "demo123")
-H = {"X-API-TOKEN": TOKEN}
+BASE = "http://127.0.0.1:8000"
+TOK = os.environ.get("API_TOKEN", "demo123")
+H = {"Authorization": f"Bearer {TOK}"}
 
 def ping(method, url, **kw):
     r = requests.request(method, url, **kw)
@@ -38,3 +38,14 @@ open(f"_tmp_report_{eid}.pdf","wb").write(r.content)
 print(f"✓ PDF downloaded to _tmp_report_{eid}.pdf")
 
 print("\nALL SMOKE TESTS PASSED ✅")
+
+
+def ok(r): 
+    assert r.status_code == 200, (r.status_code, r.text); 
+    return r.json()
+
+print("[smoke] GET /api/config"); ok(requests.get(f"{BASE}/api/config", headers=H))
+print("[smoke] POST /api/config"); ok(requests.post(f"{BASE}/api/config", headers={**H, "Content-Type":"application/json"}, data=json.dumps({"seed":1234,"scale":1.25})))
+print("[smoke] POST /api/model/save"); ok(requests.post(f"{BASE}/api/model/save", headers=H))
+print("[smoke] POST /api/model/load"); ok(requests.post(f"{BASE}/api/model/load", headers=H))
+print("[smoke] OK ✅")

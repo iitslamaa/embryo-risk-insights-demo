@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="card" style="max-width:960px;margin:auto;">
+  <h2 style="margin:0 0 8px 0;">Embryo Comparator (React)</h2>
+  <p class="small" style="margin:0 0 12px 0;">Select up to 3 embryos to compare overall scores.</p>
+
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+    <input id="search" class="input" placeholder="Search embryo id..." style="max-width:260px;">
+    <button id="reloadBtn" class="btn" type="button">Reload</button>
+    <span id="msg" class="small" style="margin-left:8px;color:var(--muted);"></span>
+  </div>
+
+  <div id="root"></div>
+</div>
+
+<!-- React via CDN + Babel for JSX -->
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- 1) Put the token in a plain script that Jinja CAN render -->
+<script>
+  window.DEMO_TOKEN = "{{ api_token }}";
+</script>
+
+<!-- 2) Wrap ALL JSX / double-brace content in a raw block so Jinja ignores it -->
+{% raw %}
+<script type="text/babel">
+const TOKEN = window.DEMO_TOKEN;
+const HJSON = { "Authorization": "Bearer " + TOKEN, "Content-Type": "application/json" };
+const HAUTH = { "Authorization": "Bearer " + TOKEN };
+
+const setMsg = (s, bad=false) => {
+  const el = document.getElementById("msg");
+  el.textContent = s || "";
+  el.style.color = bad ? "var(--bad)" : "var(--muted)";
+};
+
+function OverallChart({ items }) {
+  const canvasRef = React.useRef(null);
+  const chartRef  = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!window.Chart || !canvasRef.current) return;
+    if (chartRef.current) chartRef.current.destroy();
+
+    const labels = items.map(x => x.embryo_id);
+    const data   = items.map(x => x.overall_score);
+
+    chartRef.current = new window.Chart(canvasRef.current.getContext("2d"), {
+      type: "bar",
+      data: { labels, datasets: [{ label: "Overall Score", data }] },
+      options: {
+        responsive: true,
+        scales: { y: { min: 0, max: 100 } },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    return () => chartRef.current && chartRef.current.destroy();
+  }, [items]);
+
+  return <canvas ref={canvasRef} height="120"></canvas>;
+}
+
+function App() {
+  const [all, setAll]           = React.useState([]);
+  const [q, setQ]               = React.useState("");
+  const [selected, setSelected] = React.useState([]);
+  const [loading, setLoading]   = React.useState(false);
+
+  const filtered = React.useMemo(() => {
+    const qq = q.trim().toLowerCase();
+    if (!qq) return all;
+    return all.filter(x => String(x.embryo_id).toLowerCase().includes(qq));
+  }, [q, all]);
+
+  const chosen = all.filter(x => selected.includes(String(x.embryo_id)));
+
+  async function load() {
+    try {
+      setLoading(true); setMsg("Loading...");
+      const r = await fetch("/api/embryos", { headers: HAUTH });
+      if (!r.ok) throw new Error("HTTP " + r.status + ": " + (await r.text()));
+      const j = await r.json();
+      j.sort((a,b) => b.overall_score - a.overall_score);
+      setAll(j);
+      setMsg("Loaded " + j.length + " embryos.");
+    } catch (e) {
+      console.error(e);
+      setMsg("Failed to load embryos: " + e.message, true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  React.useEffect(() => { load(); }, []);
+
+  React.useEffect(() => {
+    const s = document.getElementById("search");
+    const reloadBtn = document.getElementById("reloadBtn");
+    const onInput = () => setQ(s.value);
+    s.addEventListener("input", onInput);
+    reloadBtn.addEventListener("click", load);
+    return () => {
+      s.removeEventListener("input", onInput);
+      reloadBtn.removeEventListener("click", load);
+    };
+  }, []);
+
+  function toggle(id) {
+    id = String(id);
+    setSelected(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 3) { setMsg("You can compare up to 3.", true); return prev; }
+      setMsg("");
+      return [...prev, id];
+    });
+  }
+
+  return (
+    <div>
+      <table className="table" style={{width:"100%"}}>
+        <thead>
+          <tr>
+            <th style={{width:"60px"}}>Pick</th>
+            <th>Embryo</th>
+            <th style={{textAlign:"right"}}>Overall</th>
+            <th>Monogenic</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.map(row => {
+            const carriers = Object.entries(row.monogenic || {})
+              .filter(([g,s]) => String(s).toLowerCase()==="carrier")
+              .map(([g]) => g).join(", ") || "—";
+            const id = String(row.embryo_id);
+            const checked = selected.includes(id);
+            return (
+              <tr key={id}>
+                <td><input type="checkbox" checked={checked} onChange={()=>toggle(id)} /></td>
+                <td><code>{id}</code></td>
+                <td style={{textAlign:"right", fontVariantNumeric:"tabular-nums"}}>{row.overall_score}</td>
+                <td>{carriers}</td>
+              </tr>
+            );
+          })}
+          {loading && <tr><td colSpan="4">Loading…</td></tr>}
+        </tbody>
+      </table>
+
+      <div className="panel" style={{marginTop:12}}>
+        <h4 style={{marginTop:0}}>Selected</h4>
+        {chosen.length === 0 ? (
+          <p className="small">Pick embryos above to compare (up to 3).</p>
+        ) : (
+          <OverallChart items={chosen}/>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+{% endraw %}
+{% endblock %}
